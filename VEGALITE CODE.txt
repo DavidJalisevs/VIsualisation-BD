@@ -53,7 +53,8 @@
               "encoding": {
                 "tooltip":[{"field": "departure_code", "type": "nominal", "title": "Reason for Departure"},
                 {"aggregate": "count", "type": "quantitative", "title": "Number of Departures"}],
-                "x": {"field": "departure_code", "type": "nominal", "title": "Reason for Departure"},
+                "x": {"field": "departure_code", "type": "nominal", "title": "Reason for Departure", "axis": {"labelAngle": 0,"format": "d"} 
+},
                 "y": {"aggregate": "count", "type": "quantitative", "title": "Number of Departures"},
                 "color": {
                   "field": "departure_code",
@@ -64,7 +65,8 @@
                     "title": "Reason for Departure",
                     "direction": "vertical",
                     "legendX": 900,
-                    "legendY": 20
+                    "legendY": 20,
+                    "values": ["1-Involuntary-death", "2-Involuntary-illness", "3-Involuntary Bad performance", "4-Involuntary legal violations", "5-Voluntary retired", "6-Voluntary new opportunity", "7-Etc as company dont exist", "8-Went missing", "9-Unkown"],
                   }
                 }
               },
@@ -129,8 +131,9 @@
       },
   "transform": [
     {"calculate": "year(datum.leftofc)", "as": "departure_year"},
+    {"calculate": "datum.departure_code == 1 ? '1-Involuntary-death' : datum.departure_code == 2 ? '2-Involuntary-illness' : datum.departure_code == 3 ? '3-Involuntary Bad performance' : datum.departure_code == 4 ? '4-Involuntary legal violations' : datum.departure_code == 5 ? '5-Voluntary retired' : datum.departure_code == 6 ? '6-Voluntary new opportunity' : datum.departure_code == 7 ? '7-Etc as company dont exist' : datum.departure_code == 8 ? '8-Went missing' : '9-Unknown'", "as": "label" },
     {"filter": {"selection": "brush"}},
-    {"aggregate": [{"op": "count", "as": "count"}], "groupby": ["departure_code"]},
+    {"aggregate": [{"op": "count", "as": "count"}], "groupby": ["label"]},
     {"filter": "datum.count > 0"},
     {
       "window": [{"op": "sum", "field": "count", "as": "total"}],
@@ -144,15 +147,15 @@
   "mark": {"type": "arc", "outerRadius": 100},
   "encoding": {
     "theta": {"field": "count", "type": "quantitative", "stack": true, "title": "Number of Departures"},
-    "color": {"field": "departure_code", "type": "nominal", "title": "Departure Reason"},
+    "color": {"field": "label", "type": "nominal", "title": "Departure Reason"},
     "tooltip": [
-      {"field": "departure_code", "type": "nominal", "title": "Departure Reason"},
+      {"field": "label", "type": "nominal", "title": "Departure Reason"},
       {"field": "count", "type": "quantitative", "title": "Number of Departures"},
       {
         "field": "percentage",
         "type": "quantitative",
         "title": "Percentage",
-        "format": ".1%"
+        "format": ".1%",
       }
     ]
   },
