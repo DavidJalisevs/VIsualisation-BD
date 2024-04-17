@@ -1,0 +1,226 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "https://raw.githubusercontent.com/DavidJalisevs/VIsualisation-BD/main/cleaned_departures.json"
+  },
+  "transform": [
+    {"calculate": "year(datum.leftofc)", "as": "departure_year"},
+    {"filter": "datum.departure_year >= 1990 && datum.departure_year <= 2021"}
+  ],
+  "vconcat": [
+    {
+      "hconcat": [
+        {
+          "width": 600,
+          "height": 200,
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "departure_year",
+              "type": "quantitative",
+              "scale": {"zero": false},
+              "axis": {"labelAngle": -45}
+            },
+            "y": {
+              "aggregate": "count",
+              "type": "quantitative",
+              "title": "Number of Departures"
+            }
+          },
+          "selection": {
+            "brush": {
+              "type": "interval",
+              "encodings": ["x"],
+              "on": "[mousedown[event.shiftKey], window:mouseup] > window:mousemove!",
+              "translate": "[mousedown[event.shiftKey], window:mouseup] > window:mousemove!",
+              "zoom": "wheel[event.shiftKey]"
+            },
+            "zoom": {
+              "type": "interval",
+              "bind": "scales",
+              "encodings": ["x"],
+              "on": "[mousedown[!event.shiftKey], window:mouseup] > window:mousemove!",
+              "translate": "[mousedown[!event.shiftKey], window:mouseup] > window:mousemove!",
+              "zoom": "wheel[!event.shiftKey]"
+            }
+          },
+          "title": "Number of Departures by Year(Shift+LMB to select, Mousewheel to zoom)"
+        },
+        {
+          "layer": [
+            {
+              "mark": "bar",
+              "encoding": {
+                "tooltip":[{"field": "departure_code", "type": "nominal", "title": "Reason for Departure"},
+                {"aggregate": "count", "type": "quantitative", "title": "Number of Departures"}],
+                "x": {"field": "departure_code", "type": "nominal", "title": "Reason for Departure"},
+                "y": {"aggregate": "count", "type": "quantitative", "title": "Number of Departures"},
+                "color": {
+                  "field": "departure_code",
+                  "type": "nominal",
+                  "title": "Reason for Departure",
+                  "legend": {
+                    "orient": "none",
+                    "title": "Reason for Departure",
+                    "direction": "vertical",
+                    "legendX": 900,
+                    "legendY": 20
+                  }
+                }
+              },
+              "transform": [{"filter": {"selection": "brush"}}]
+            },
+            {
+              "mark": {"type": "text", "align": "center", "baseline": "bottom", "dy": -5},
+              "encoding": {
+                "x": {"field": "departure_code", "type": "nominal"},
+                "y": {"aggregate": "count", "type": "quantitative"},
+                "text": {"aggregate": "count", "type": "quantitative", "format": ".0f"},
+                "color": {"value": "black"}
+              },
+              "transform": [{"filter": {"selection": "brush"}}]
+            }
+          ],
+          "title": {"text": "Number of Departures by Reason", "orient": "top"}
+        }
+      ]
+    },
+    {
+      "transform": [
+        {"filter": {"selection": "brush"}},
+        {"aggregate": [{"op": "count", "as": "departures_count"}], "groupby": ["coname"]},
+        {"joinaggregate": [{"op": "sum", "field": "departures_count", "as": "total_departures"}], "groupby": ["coname"]},
+        {"window": [{"op": "rank", "as": "rank"}], "sort": [{"field": "departures_count", "order": "descending"}], "groupby": ["departure_year"]},
+        {"filter": "datum.rank <= 10"}
+      ],
+      "mark": "bar",
+      "selection": {
+        "highlight": {"type": "single", "on": "mouseover", "empty": "none", "fields": ["coname"]}
+      },
+      "encoding": {
+        "x": {
+          "field": "coname",
+          "type": "nominal",
+          "sort": {"field": "total_departures", "order": "descending"},
+          "title": "Company Name",
+          "axis": {"labelAngle": -45}
+        },
+        "y": {
+          "field": "total_departures",
+          "type": "quantitative",
+          "title": "Total Departures"
+        },
+        "color": {
+          "condition": {"selection": "highlight", "value": "red"},
+          "value": "steelblue"
+        },
+        "tooltip": [
+          {"field": "coname", "type": "nominal"},
+          {"field": "total_departures", "type": "quantitative"}
+        ]
+      },
+      "title": "Top Companies by Total Departures"
+    },
+    {
+      "width": 300,
+      "height": 300,
+      "data": {
+        "url": "https://raw.githubusercontent.com/DavidJalisevs/VIsualisation-BD/main/cleaned_departures.json"
+      },
+  "transform": [
+    {"calculate": "year(datum.leftofc)", "as": "departure_year"},
+    {"filter": {"selection": "brush"}},
+    {"aggregate": [{"op": "count", "as": "count"}], "groupby": ["departure_code"]},
+    {"filter": "datum.count > 0"},
+    {
+      "window": [{"op": "sum", "field": "count", "as": "total"}],
+      "frame": [null, null]
+    },
+    {
+      "calculate": "datum.count / datum.total",
+      "as": "percentage"
+    }
+  ],
+  "mark": {"type": "arc", "outerRadius": 100},
+  "encoding": {
+    "theta": {"field": "count", "type": "quantitative", "stack": true, "title": "Number of Departures"},
+    "color": {"field": "departure_code", "type": "nominal", "title": "Departure Reason"},
+    "tooltip": [
+      {"field": "departure_code", "type": "nominal", "title": "Departure Reason"},
+      {"field": "count", "type": "quantitative", "title": "Number of Departures"},
+      {
+        "field": "percentage",
+        "type": "quantitative",
+        "title": "Percentage",
+        "format": ".1%"
+      }
+    ]
+  },
+      "title": "Distribution of CEO Departure Reasons"
+    },
+    {
+      "width": 300,
+      "height": 300,
+      "data": {
+        "url": "https://raw.githubusercontent.com/DavidJalisevs/VIsualisation-BD/main/cleaned_departures.json"
+      },
+      "transform": [
+        {"calculate": "year(datum.leftofc)", "as": "departure_year"},
+        {"filter": {"selection": "brush"}},
+        {"aggregate": [{"op": "count", "as": "count"}], "groupby": ["max_tenure_ceodb"]},
+        {"filter": "datum.count > 0"}
+      ],
+      "mark": {"type": "bar", "tooltip": true},
+      "encoding": {
+        "x": {
+          "field": "max_tenure_ceodb",
+          "type": "ordinal",
+          "title": "CEO Reappointments"
+        },
+        "y": {
+          "field": "count",
+          "type": "quantitative",
+          "title": "Frequency"
+        },
+        "tooltip": [
+          {"field": "max_tenure_ceodb", "type": "ordinal", "title": "CEO Reappointments"},
+          {"field": "count", "type": "quantitative", "title": "Frequency"}
+        ]
+      },
+      "title": {"text": "Frequency of CEO Reappointments", "orient": "top"}
+    },
+    {
+      "width": 300,
+      "height": 300,
+      "mark": "rect",
+      "encoding": {
+        "x": {
+          "field": "max_tenure_ceodb",
+          "type": "ordinal",
+          "title": "Max Tenure of CEO (Years)"
+        },
+        "y": {
+          "field": "departure_code",
+          "type": "ordinal",
+          "title": "Reason for Departure"
+        },
+        "color": {
+          "aggregate": "count",
+          "type": "quantitative",
+          "title": "Number of Departures",
+          "scale": {"scheme": "reds"}
+        },
+        "tooltip": [
+          {"field": "max_tenure_ceodb", "type": "ordinal", "title": "CEO Tenure"},
+          {"field": "departure_code", "type": "ordinal", "title": "Reason for Departure"},
+          {"aggregate": "count", "type": "quantitative", "title": "Number of Departures"}
+        ]
+      },
+      "transform": [
+        {"filter": {"selection": "brush"}}
+      ],
+      "title": "Heat Map of Departures by CEO Tenure and Reason"
+    }
+  ],
+  "resolve": {"scale": {"y": "independent"}}
+}
